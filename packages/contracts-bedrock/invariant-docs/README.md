@@ -10,6 +10,7 @@ This directory contains documentation for all defined invariant tests within `co
 - [Burn.Eth](./Burn.Eth.md)
 - [Burn.Gas](./Burn.Gas.md)
 - [CrossDomainMessenger](./CrossDomainMessenger.md)
+- [DelayedVetoable](./DelayedVetoable.md)
 - [Encoding](./Encoding.md)
 - [Hashing](./Hashing.md)
 - [L2OutputOracle](./L2OutputOracle.md)
