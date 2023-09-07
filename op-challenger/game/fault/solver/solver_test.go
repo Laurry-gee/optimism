@@ -15,32 +15,11 @@ func TestNextMove(t *testing.T) {
 	maxDepth := 4
 	builder := test.NewAlphabetClaimBuilder(t, maxDepth)
 	tests := []struct {
-		name           string
-		claim          types.Claim
-		agreeWithLevel bool
-		expectedErr    error
-		expectedMove   func(claim types.Claim, correct bool) types.Claim
+		name         string
+		claim        types.Claim
+		expectedErr  error
+		expectedMove func(claim types.Claim, correct bool) types.Claim
 	}{
-		{
-			name:           "AgreeWithLevel_CorrectRoot",
-			claim:          builder.CreateRootClaim(true),
-			agreeWithLevel: true,
-		},
-		{
-			name:           "AgreeWithLevel_IncorrectRoot",
-			claim:          builder.CreateRootClaim(false),
-			agreeWithLevel: true,
-		},
-		{
-			name:           "AgreeWithLevel_EvenDepth",
-			claim:          builder.Seq(false).Attack(false).Get(),
-			agreeWithLevel: true,
-		},
-		{
-			name:           "AgreeWithLevel_OddDepth",
-			claim:          builder.Seq(false).Attack(false).Defend(false).Get(),
-			agreeWithLevel: true,
-		},
 		{
 			name:  "Root_CorrectValue",
 			claim: builder.CreateRootClaim(true),
@@ -63,7 +42,7 @@ func TestNextMove(t *testing.T) {
 		{
 			name:         "NonRoot_DisagreeWithParentAgreeWithClaim",
 			claim:        builder.Seq(false).Attack(true).Get(),
-			expectedMove: builder.DefendClaim,
+			expectedMove: nil,
 		},
 		{
 			name:         "NonRoot_DisagreeWithParentAndClaim",
@@ -85,7 +64,7 @@ func TestNextMove(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			solver := solver.NewSolver(maxDepth, builder.CorrectTraceProvider())
-			move, err := solver.NextMove(context.Background(), test.claim, test.agreeWithLevel)
+			move, err := solver.NextMove(context.Background(), test.claim)
 			if test.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -116,7 +95,6 @@ func TestAttemptStep(t *testing.T) {
 	tests := []struct {
 		name               string
 		claim              types.Claim
-		agreeWithLevel     bool
 		expectedErr        error
 		expectAttack       bool
 		expectPreState     []byte
@@ -177,16 +155,14 @@ func TestAttemptStep(t *testing.T) {
 			expectedErr: solver.ErrStepNonLeafNode,
 		},
 		{
-			name:           "CannotStepAgreedNode",
-			claim:          builder.Seq(false).Attack(false).Get(),
-			agreeWithLevel: true,
-			expectedErr:    solver.ErrStepNonLeafNode,
+			name:        "CannotStepAgreedNode",
+			claim:       builder.Seq(false).Attack(false).Get(),
+			expectedErr: solver.ErrStepNonLeafNode,
 		},
 		{
-			name:           "CannotStepAgreedNode",
-			claim:          builder.Seq(false).Attack(false).Get(),
-			agreeWithLevel: true,
-			expectedErr:    solver.ErrStepNonLeafNode,
+			name:        "CannotStepAgreedNode",
+			claim:       builder.Seq(false).Attack(false).Get(),
+			expectedErr: solver.ErrStepNonLeafNode,
 		},
 	}
 
@@ -199,7 +175,7 @@ func TestAttemptStep(t *testing.T) {
 			}
 			builder = test.NewClaimBuilder(t, maxDepth, alphabetProvider)
 			alphabetSolver := solver.NewSolver(maxDepth, builder.CorrectTraceProvider())
-			step, err := alphabetSolver.AttemptStep(ctx, tableTest.claim, tableTest.agreeWithLevel)
+			step, err := alphabetSolver.AttemptStep(ctx, tableTest.claim)
 			if tableTest.expectedErr == nil {
 				require.NoError(t, err)
 				require.Equal(t, tableTest.claim, step.LeafClaim)

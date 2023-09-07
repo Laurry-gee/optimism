@@ -194,27 +194,3 @@ func TestGame_ClaimPairs(t *testing.T) {
 	claims := g.Claims()
 	require.ElementsMatch(t, expected, claims)
 }
-
-func TestAgreeWithClaimLevelDisagreeWithOutput(t *testing.T) {
-	// Setup the game state.
-	root, top, middle, bottom := createTestClaims()
-	g := NewGameState(false, root, testMaxDepth)
-	require.NoError(t, g.PutAll([]Claim{top, middle, bottom}))
-
-	require.True(t, g.AgreeWithClaimLevel(root))
-	require.False(t, g.AgreeWithClaimLevel(top))
-	require.True(t, g.AgreeWithClaimLevel(middle))
-	require.False(t, g.AgreeWithClaimLevel(bottom))
-}
-
-func TestAgreeWithClaimLevelAgreeWithOutput(t *testing.T) {
-	// Setup the game state.
-	root, top, middle, bottom := createTestClaims()
-	g := NewGameState(true, root, testMaxDepth)
-	require.NoError(t, g.PutAll([]Claim{top, middle, bottom}))
-
-	require.False(t, g.AgreeWithClaimLevel(root))
-	require.True(t, g.AgreeWithClaimLevel(top))
-	require.False(t, g.AgreeWithClaimLevel(middle))
-	require.True(t, g.AgreeWithClaimLevel(bottom))
-}

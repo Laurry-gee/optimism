@@ -30,10 +30,7 @@ func NewSolver(gameDepth int, traceProvider types.TraceProvider) *Solver {
 }
 
 // NextMove returns the next move to make given the current state of the game.
-func (s *Solver) NextMove(ctx context.Context, claim types.Claim, agreeWithClaimLevel bool) (*types.Claim, error) {
-	if agreeWithClaimLevel {
-		return nil, nil
-	}
+func (s *Solver) NextMove(ctx context.Context, claim types.Claim) (*types.Claim, error) {
 	if claim.Depth() == s.gameDepth {
 		return nil, types.ErrGameDepthReached
 	}
@@ -42,7 +39,20 @@ func (s *Solver) NextMove(ctx context.Context, claim types.Claim, agreeWithClaim
 		return nil, err
 	}
 	if agree {
-		return s.defend(ctx, claim)
+		// Before challenging this claim via defense, first check that the attack wasn't warranted.
+		// If the parent claim is incorrect, then the attack is what we would have done anyways. So we don't move.
+		var agreeWithParent bool
+		if !claim.IsRoot() {
+			agreeWithParent, err = s.agreeWithClaim(ctx, claim.Parent)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if agreeWithParent {
+			return s.defend(ctx, claim)
+		} else {
+			return nil, nil
+		}
 	} else {
 		return s.attack(ctx, claim)
 	}
@@ -58,12 +68,9 @@ type StepData struct {
 
 // AttemptStep determines what step should occur for a given leaf claim.
 // An error will be returned if the claim is not at the max depth.
-func (s *Solver) AttemptStep(ctx context.Context, claim types.Claim, agreeWithClaimLevel bool) (StepData, error) {
+func (s *Solver) AttemptStep(ctx context.Context, claim types.Claim) (StepData, error) {
 	if claim.Depth() != s.gameDepth {
 		return StepData{}, ErrStepNonLeafNode
-	}
-	if agreeWithClaimLevel {
-		return StepData{}, ErrStepAgreedClaim
 	}
 	claimCorrect, err := s.agreeWithClaim(ctx, claim.ClaimData)
 	if err != nil {

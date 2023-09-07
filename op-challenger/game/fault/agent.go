@@ -121,7 +121,7 @@ func (a *Agent) newGameFromContracts(ctx context.Context) (types.Game, error) {
 
 // move determines & executes the next move given a claim
 func (a *Agent) move(ctx context.Context, claim types.Claim, game types.Game) error {
-	nextMove, err := a.solver.NextMove(ctx, claim, game.AgreeWithClaimLevel(claim))
+	nextMove, err := a.solver.NextMove(ctx, claim)
 	if err != nil {
 		return fmt.Errorf("execute next move: %w", err)
 	}
@@ -148,19 +148,13 @@ func (a *Agent) step(ctx context.Context, claim types.Claim, game types.Game) er
 		return nil
 	}
 
-	agreeWithClaimLevel := game.AgreeWithClaimLevel(claim)
-	if agreeWithClaimLevel {
-		a.log.Debug("Agree with leaf claim, skipping step", "claim_depth", claim.Depth(), "maxDepth", a.maxDepth)
-		return nil
-	}
-
 	if claim.Countered {
 		a.log.Debug("Step already executed against claim", "depth", claim.Depth(), "index_at_depth", claim.IndexAtDepth(), "value", claim.Value)
 		return nil
 	}
 
 	a.log.Info("Attempting step", "claim_depth", claim.Depth(), "maxDepth", a.maxDepth)
-	step, err := a.solver.AttemptStep(ctx, claim, agreeWithClaimLevel)
+	step, err := a.solver.AttemptStep(ctx, claim)
 	if err != nil {
 		return fmt.Errorf("attempt step: %w", err)
 	}
