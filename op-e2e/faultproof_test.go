@@ -46,6 +46,8 @@ func TestMultipleAlphabetGames(t *testing.T) {
 	sys.TimeTravelClock.AdvanceTime(gameDuration)
 	require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+	game1.ResolveAllClaims(ctx)
+	game2.ResolveAllClaims(ctx)
 	game1.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 	game2.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 }
@@ -99,7 +101,9 @@ func TestMultipleCannonGames(t *testing.T) {
 	sys.TimeTravelClock.AdvanceTime(gameDuration)
 	require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+	game1.ResolveAllClaims(ctx)
 	game1.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
+	game2.ResolveAllClaims(ctx)
 	game2.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 
 	// Check that the game directories are removed
@@ -132,6 +136,7 @@ func TestResolveDisputeGame(t *testing.T) {
 	sys.TimeTravelClock.AdvanceTime(gameDuration)
 	require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+	game.ResolveAllClaims(ctx)
 	// Challenger should resolve the game now that the clocks have expired.
 	game.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 }
@@ -235,6 +240,7 @@ func TestChallengerCompleteDisputeGame(t *testing.T) {
 			sys.TimeTravelClock.AdvanceTime(gameDuration)
 			require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+			game.ResolveAllClaims(ctx)
 			game.WaitForGameStatus(ctx, test.expectedResult)
 		})
 	}
@@ -296,6 +302,7 @@ func TestCannonDisputeGame(t *testing.T) {
 			sys.TimeTravelClock.AdvanceTime(game.GameDuration(ctx))
 			require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+			game.ResolveAllClaims(ctx)
 			game.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 			game.LogGameData(ctx)
 		})
@@ -352,6 +359,7 @@ func TestCannonDefendStep(t *testing.T) {
 	sys.TimeTravelClock.AdvanceTime(game.GameDuration(ctx))
 	require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+	game.ResolveAllClaims(ctx)
 	game.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 	game.LogGameData(ctx)
 }
@@ -391,6 +399,7 @@ func TestCannonProposedOutputRootInvalid(t *testing.T) {
 	sys.TimeTravelClock.AdvanceTime(game.GameDuration(ctx))
 	require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+	game.ResolveAllClaims(ctx)
 	game.WaitForGameStatus(ctx, disputegame.StatusDefenderWins)
 	game.LogGameData(ctx)
 }
@@ -478,6 +487,7 @@ func TestCannonChallengeWithCorrectRoot(t *testing.T) {
 	sys.TimeTravelClock.AdvanceTime(game.GameDuration(ctx))
 	require.NoError(t, wait.ForNextBlock(ctx, l1Client))
 
+	game.ResolveAllClaims(ctx)
 	game.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 	game.LogGameData(ctx)
 }
