@@ -697,12 +697,8 @@ contract Resolver {
             (uint32 parentIndex,,,Position position,) = gameProxy.claimData(i);
             subgames[parentIndex] = true;
 
-            // Skip subgames at MAX_DEPTH
-            if (position.depth() == gameProxy.MAX_GAME_DEPTH()) {
-                continue;
-            }
-
-            // Subgames rooted at uncountered claims are implicitly resolved
+            // Subgames containing only one node are implicitly resolved
+            // i.e. uncountered claims and claims at MAX_DEPTH
             if (!subgames[i]) {
                 continue;
             }
