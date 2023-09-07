@@ -445,6 +445,19 @@ contract FaultDisputeGame_Test is FaultDisputeGame_Init {
         gameProxy.resolveClaim(1);
     }
 
+    /// @dev Static unit test asserting that resolve reverts when attempting to resolve a subgame at max depth
+    function test_resolve_claimAtMaxDepthAlreadyResolved_reverts() public {
+        gameProxy.attack(0, Claim.wrap(bytes32(uint256(5))));
+        gameProxy.attack(1, Claim.wrap(bytes32(uint256(5))));
+        gameProxy.attack(2, Claim.wrap(bytes32(uint256(5))));
+        gameProxy.attack(3, Claim.wrap(bytes32(uint256(5))));
+
+        vm.warp(block.timestamp + 3 days + 12 hours + 1 seconds);
+
+        vm.expectRevert(ClaimAlreadyResolved.selector);
+        gameProxy.resolveClaim(4);
+    }
+
     /// @dev Static unit test asserting that resolve reverts when attempting to resolve subgames out of order
     function test_resolve_outOfOrderResolution_reverts() public {
         gameProxy.attack(0, Claim.wrap(bytes32(uint256(5))));
