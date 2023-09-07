@@ -685,6 +685,8 @@ contract GamePlayer {
 contract Resolver {
     FaultDisputeGame public gameProxy;
 
+    mapping(uint256 => bool) subgames;
+
     constructor(FaultDisputeGame gameProxy_) {
         gameProxy = gameProxy_;
     }
@@ -692,10 +694,19 @@ contract Resolver {
     /// @notice Auto-resolves all subgames in the game
     function run() public {
         for (uint i = gameProxy.claimDataLen()-1; i > 0; i--) {
-            (,,,Position position,) = gameProxy.claimData(i);
+            (uint32 parentIndex,,,Position position,) = gameProxy.claimData(i);
+            subgames[parentIndex] = true;
+
+            // Skip subgames at MAX_DEPTH
             if (position.depth() == gameProxy.MAX_GAME_DEPTH()) {
                 continue;
             }
+
+            // Subgames rooted at uncountered claims are implicitly resolved
+            if (!subgames[i]) {
+                continue;
+            }
+
             gameProxy.resolveClaim(i);
         }
         gameProxy.resolveClaim(0);
