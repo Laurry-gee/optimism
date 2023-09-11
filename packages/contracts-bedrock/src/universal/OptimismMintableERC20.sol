@@ -49,7 +49,10 @@ contract OptimismMintableERC20 is IOptimismMintableERC20, ILegacyMintableERC20, 
         string memory _name,
         string memory _symbol,
         uint8 _decimals
-    ) ERC20(_name, _symbol) Semver(1, 2, 0) {
+    )
+        ERC20(_name, _symbol)
+        Semver(1, 2, 0)
+    {
         REMOTE_TOKEN = _remoteToken;
         BRIDGE = _bridge;
         DECIMALS = _decimals;

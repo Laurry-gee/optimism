@@ -78,7 +78,10 @@ contract OptimismMintableERC20Factory is Semver, Initializable {
         address _remoteToken,
         string memory _name,
         string memory _symbol
-    ) public returns (address) {
+    )
+        public
+        returns (address)
+    {
         return createOptimismMintableERC20WithDecimals(_remoteToken, _name, _symbol, 18);
     }
 
@@ -93,11 +96,15 @@ contract OptimismMintableERC20Factory is Semver, Initializable {
         string memory _name,
         string memory _symbol,
         uint8 _decimals
-    ) public returns (address) {
+    )
+        public
+        returns (address)
+    {
         require(_remoteToken != address(0), "OptimismMintableERC20Factory: must provide remote token address");
 
         bytes32 salt = keccak256(abi.encode(_remoteToken, _name, _symbol));
-        address localToken = address(new OptimismMintableERC20{salt: salt}(bridge, _remoteToken, _name, _symbol, _decimals));
+        address localToken =
+            address(new OptimismMintableERC20{salt: salt}(bridge, _remoteToken, _name, _symbol, _decimals));
 
         // Emit the old event too for legacy support.
         emit StandardL2TokenCreated(_remoteToken, localToken);
