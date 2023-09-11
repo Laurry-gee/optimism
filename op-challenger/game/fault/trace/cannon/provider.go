@@ -48,6 +48,7 @@ type CannonTraceProvider struct {
 	dir       string
 	prestate  string
 	generator ProofGenerator
+	gameDepth uint64
 
 	// lastStep stores the last step in the actual trace if known. 0 indicates unknown.
 	// Cached as an optimisation to avoid repeatedly attempting to execute beyond the end of the trace.
@@ -56,7 +57,7 @@ type CannonTraceProvider struct {
 	lastProof *proofData
 }
 
-func NewTraceProvider(ctx context.Context, logger log.Logger, m CannonMetricer, cfg *config.Config, l1Client bind.ContractCaller, dir string, gameAddr common.Address) (*CannonTraceProvider, error) {
+func NewTraceProvider(ctx context.Context, logger log.Logger, m CannonMetricer, cfg *config.Config, l1Client bind.ContractCaller, dir string, gameAddr common.Address, gameDepth uint64) (*CannonTraceProvider, error) {
 	l2Client, err := ethclient.DialContext(ctx, cfg.CannonL2)
 	if err != nil {
 		return nil, fmt.Errorf("dial l2 client %v: %w", cfg.CannonL2, err)
@@ -70,15 +71,16 @@ func NewTraceProvider(ctx context.Context, logger log.Logger, m CannonMetricer, 
 	if err != nil {
 		return nil, fmt.Errorf("fetch local game inputs: %w", err)
 	}
-	return NewTraceProviderFromInputs(logger, m, cfg, localInputs, dir), nil
+	return NewTraceProviderFromInputs(logger, m, cfg, localInputs, dir, gameDepth), nil
 }
 
-func NewTraceProviderFromInputs(logger log.Logger, m CannonMetricer, cfg *config.Config, localInputs LocalGameInputs, dir string) *CannonTraceProvider {
+func NewTraceProviderFromInputs(logger log.Logger, m CannonMetricer, cfg *config.Config, localInputs LocalGameInputs, dir string, gameDepth uint64) *CannonTraceProvider {
 	return &CannonTraceProvider{
 		logger:    logger,
 		dir:       dir,
 		prestate:  cfg.CannonAbsolutePreState,
 		generator: NewExecutor(logger, m, cfg, localInputs),
+		gameDepth: gameDepth,
 	}
 }
 
@@ -138,14 +140,14 @@ func (p *CannonTraceProvider) AbsolutePreStateCommitment(ctx context.Context) (c
 // loadProof will attempt to load or generate the proof data at the specified index
 // If the requested index is beyond the end of the actual trace it is extended with no-op instructions.
 func (p *CannonTraceProvider) loadProof(ctx context.Context, i types.Position) (*proofData, error) {
-	if p.lastProof != nil && i.ToGIndex() > p.lastStep {
+	if p.lastProof != nil && i.TraceIndex(int(p.gameDepth)) > p.lastStep {
 		// If the requested index is after the last step in the actual trace, extend the final no-op step
 		return p.lastProof, nil
 	}
-	path := filepath.Join(p.dir, proofsDir, fmt.Sprintf("%d.json.gz", i))
+	path := filepath.Join(p.dir, proofsDir, fmt.Sprintf("%d.json.gz", i.TraceIndex(int(p.gameDepth))))
 	file, err := ioutil.OpenDecompressed(path)
 	if errors.Is(err, os.ErrNotExist) {
-		if err := p.generator.GenerateProof(ctx, p.dir, i.ToGIndex()); err != nil {
+		if err := p.generator.GenerateProof(ctx, p.dir, i.TraceIndex(int(p.gameDepth))); err != nil {
 			return nil, fmt.Errorf("generate cannon trace with proof at %v: %w", i, err)
 		}
 		// Try opening the file again now and it should exist.
@@ -156,7 +158,7 @@ func (p *CannonTraceProvider) loadProof(ctx context.Context, i types.Position) (
 			if err != nil {
 				return nil, fmt.Errorf("cannot read final state: %w", err)
 			}
-			if state.Exited && state.Step <= i.ToGIndex() {
+			if state.Exited && state.Step <= i.TraceIndex(int(p.gameDepth)) {
 				p.logger.Warn("Requested proof was after the program exited", "proof", i, "last", state.Step)
 				// The final instruction has already been applied to this state, so the last step we can execute
 				// is one before its Step value.
