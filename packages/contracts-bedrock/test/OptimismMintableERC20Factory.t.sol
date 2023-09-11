@@ -18,6 +18,8 @@ contract OptimismMintableTokenFactory_Test is Bridge_Initializer {
 
     function test_createStandardL2Token_succeeds() external {
         address remote = address(4);
+
+        // Defaults to 18 decimals
         address local = calculateTokenAddress(remote, "Beep", "BOOP", 18);
 
         vm.expectEmit(true, true, true, true);
@@ -28,6 +30,8 @@ contract OptimismMintableTokenFactory_Test is Bridge_Initializer {
 
         vm.prank(alice);
         L2TokenFactory.createStandardL2Token(remote, "Beep", "BOOP");
+
+        assertTrue(OptimismMintableERC20(local).decimals() == 18);
     }
 
     function test_createStandardL2TokenWithDecimals__succeeds() external {
@@ -41,10 +45,9 @@ contract OptimismMintableTokenFactory_Test is Bridge_Initializer {
         emit OptimismMintableERC20Created(local, remote, alice);
 
         vm.prank(alice);
-        L2TokenFactory.createStandardL2Token(remote, "Beep", "BOOP");
+        L2TokenFactory.createOptimismMintableERC20WithDecimals(remote, "Beep", "BOOP", 6);
 
-        uint8 decimals = OptimismMintableERC20(local).decimals();
-        assertTrue(decimals == 6);
+        assertTrue(OptimismMintableERC20(local).decimals() == 6);
     }
 
     function test_createStandardL2Token_sameTwice_reverts() external {
