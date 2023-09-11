@@ -42,6 +42,9 @@ contract OptimismMintableTokenFactory_Test is Bridge_Initializer {
 
         vm.prank(alice);
         L2TokenFactory.createStandardL2Token(remote, "Beep", "BOOP");
+
+        uint8 decimals = OptimismMintableERC20(local).decimals();
+        assertTrue(decimals == 6);
     }
 
     function test_createStandardL2Token_sameTwice_reverts() external {
