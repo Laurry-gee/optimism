@@ -30,11 +30,11 @@ contract OptimismMintableERC20Factory is Semver, Initializable {
     /// @param deployer    Address of the account that deployed the token.
     event OptimismMintableERC20Created(address indexed localToken, address indexed remoteToken, address deployer);
 
-    /// @custom:semver 1.3.1
+    /// @custom:semver 1.4.0
     /// @notice The semver MUST be bumped any time that there is a change in
     ///         the OptimismMintableERC20 token contract since this contract
     ///         is responsible for deploying OptimismMintableERC20 contracts.
-    constructor() Semver(1, 3, 1) {
+    constructor() Semver(1, 4, 0) {
         initialize({ _bridge: address(0) });
     }
 
