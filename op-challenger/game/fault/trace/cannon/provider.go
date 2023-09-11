@@ -82,7 +82,7 @@ func NewTraceProviderFromInputs(logger log.Logger, m CannonMetricer, cfg *config
 	}
 }
 
-func (p *CannonTraceProvider) Get(ctx context.Context, i uint64) (common.Hash, error) {
+func (p *CannonTraceProvider) Get(ctx context.Context, i types.Position) (common.Hash, error) {
 	proof, err := p.loadProof(ctx, i)
 	if err != nil {
 		return common.Hash{}, err
@@ -95,7 +95,7 @@ func (p *CannonTraceProvider) Get(ctx context.Context, i uint64) (common.Hash, e
 	return value, nil
 }
 
-func (p *CannonTraceProvider) GetStepData(ctx context.Context, i uint64) ([]byte, []byte, *types.PreimageOracleData, error) {
+func (p *CannonTraceProvider) GetStepData(ctx context.Context, i types.Position) ([]byte, []byte, *types.PreimageOracleData, error) {
 	proof, err := p.loadProof(ctx, i)
 	if err != nil {
 		return nil, nil, nil, err
@@ -137,15 +137,15 @@ func (p *CannonTraceProvider) AbsolutePreStateCommitment(ctx context.Context) (c
 
 // loadProof will attempt to load or generate the proof data at the specified index
 // If the requested index is beyond the end of the actual trace it is extended with no-op instructions.
-func (p *CannonTraceProvider) loadProof(ctx context.Context, i uint64) (*proofData, error) {
-	if p.lastProof != nil && i > p.lastStep {
+func (p *CannonTraceProvider) loadProof(ctx context.Context, i types.Position) (*proofData, error) {
+	if p.lastProof != nil && i.ToGIndex() > p.lastStep {
 		// If the requested index is after the last step in the actual trace, extend the final no-op step
 		return p.lastProof, nil
 	}
 	path := filepath.Join(p.dir, proofsDir, fmt.Sprintf("%d.json.gz", i))
 	file, err := ioutil.OpenDecompressed(path)
 	if errors.Is(err, os.ErrNotExist) {
-		if err := p.generator.GenerateProof(ctx, p.dir, i); err != nil {
+		if err := p.generator.GenerateProof(ctx, p.dir, i.ToGIndex()); err != nil {
 			return nil, fmt.Errorf("generate cannon trace with proof at %v: %w", i, err)
 		}
 		// Try opening the file again now and it should exist.
@@ -156,7 +156,7 @@ func (p *CannonTraceProvider) loadProof(ctx context.Context, i uint64) (*proofDa
 			if err != nil {
 				return nil, fmt.Errorf("cannot read final state: %w", err)
 			}
-			if state.Exited && state.Step <= i {
+			if state.Exited && state.Step <= i.ToGIndex() {
 				p.logger.Warn("Requested proof was after the program exited", "proof", i, "last", state.Step)
 				// The final instruction has already been applied to this state, so the last step we can execute
 				// is one before its Step value.
