@@ -34,7 +34,7 @@ contract OptimismMintableTokenFactory_Test is Bridge_Initializer {
         assertTrue(OptimismMintableERC20(local).decimals() == 18);
     }
 
-    function test_createStandardL2TokenWithDecimals__succeeds() external {
+    function test_createStandardL2TokenWithDecimals_succeeds() external {
         address remote = address(4);
         address local = calculateTokenAddress(remote, "Beep", "BOOP", 6);
 
