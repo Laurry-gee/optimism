@@ -175,14 +175,25 @@ func (h *FactoryHelper) StartCannonGameWithCorrectRoot(ctx context.Context, roll
 		L2BlockNumber: challengedOutput.L2BlockNumber,
 	}
 
-	provider := cannon.NewTraceProviderFromInputs(testlog.Logger(h.t, log.LvlInfo).New("role", "CorrectTrace"), metrics.NoopMetrics, cfg, inputs, cfg.Datadir)
-	rootClaim, err := provider.Get(ctx, math.MaxUint64)
+	maxDepth := uint64(math.MaxUint64)
+	provider := cannon.NewTraceProviderFromInputs(
+		testlog.Logger(h.t, log.LvlInfo).New("role", "CorrectTrace"),
+		metrics.NoopMetrics,
+		cfg,
+		inputs,
+		cfg.Datadir,
+		maxDepth,
+	)
+	pos := faultTypes.NewPositionFromGIndex(maxDepth)
+	rootClaim, err := provider.Get(ctx, pos)
 	h.require.NoError(err, "Compute correct root hash")
 	// Override the VM status to claim the root is invalid
 	// Otherwise creating the game will fail
 	rootClaim[0] = mipsevm.VMStatusInvalid
 
 	game := h.createCannonGame(ctx, l2BlockNumber, l1Head, rootClaim)
+	correctMaxDepth := game.MaxDepth(ctx)
+	provider.SetMaxDepth(uint64(correctMaxDepth))
 	honestHelper := &HonestHelper{
 		t:            h.t,
 		require:      h.require,

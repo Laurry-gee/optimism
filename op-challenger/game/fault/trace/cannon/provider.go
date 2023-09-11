@@ -84,6 +84,10 @@ func NewTraceProviderFromInputs(logger log.Logger, m CannonMetricer, cfg *config
 	}
 }
 
+func (p *CannonTraceProvider) SetMaxDepth(gameDepth uint64) {
+	p.gameDepth = gameDepth
+}
+
 func (p *CannonTraceProvider) Get(ctx context.Context, i types.Position) (common.Hash, error) {
 	proof, err := p.loadProof(ctx, i)
 	if err != nil {
