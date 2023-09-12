@@ -1,5 +1,11 @@
 # @eth-optimism/drippie-mon
 
+## 0.5.0
+
+### Minor Changes
+
+- [#7178](https://github.com/ethereum-optimism/optimism/pull/7178) [`85d1622df`](https://github.com/ethereum-optimism/optimism/commit/85d1622dfdc16f220f7df0be42ba8cbc5dea31c5) Thanks [@tynes](https://github.com/tynes)! - Use node.js v18
+
 ## 0.4.4
 
 ### Patch Changes
