@@ -16,3 +16,6 @@
 [submodule "airdrop-onion-transfer/lib/forge-std"]
 	path = airdrop-onion-transfer/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "airdrop-onion-transfer/lib/openzeppelin-contracts"]
+	path = airdrop-onion-transfer/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
