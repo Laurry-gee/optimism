@@ -1,8 +1,11 @@
+import 'dotenv/config'
+
 import { type BigNumberish, ethers, utils, BigNumber } from 'ethers'
 import fs from 'fs'
 import { Command } from 'commander'
+import fetch from 'node-fetch'
 
-import TransferOnion from '../out/TransferOnion.sol/TransferOnion.json'
+const TransferOnion = require('../out/TransferOnion.sol/TransferOnion.json')
 
 interface LayerInput {
   recipient: string
@@ -15,28 +18,37 @@ interface Layer {
   shell: string
 }
 
-const chunk = (arr: any[], size: number) => {
-  const chunks: any[] = []
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size))
-  }
-  return chunks
-}
+const fetchSanctionedAddresses = async (url: string): Promise<string[]> =>
+  (
+    await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env['GITHUB_TOKEN']}`,
+      },
+    })
+  ).json()
 
 const parseLine = (line: string): LayerInput => {
   const items = line.split(',')
   return {
     recipient: items[0] as string,
-    amount: utils.parseUnits( items[2] as string, 'ether'),
+    amount: utils.parseUnits(items[2] as string, 'ether'),
   }
 }
 
-const load = (source: string): LayerInput[] => {
+const load = async (
+  source: string,
+  sanctionedUrl: string
+): Promise<LayerInput[]> => {
   const outputs = []
-  const file = fs.readFileSync(source).toString().trim().split('\n').slice(1);
+  const sanctionedAddresses = await fetchSanctionedAddresses(sanctionedUrl)
+
+  const file = fs.readFileSync(source).toString().trim().split('\n').slice(1)
   for (const line of file) {
     const output = parseLine(line)
-    outputs.push(output)
+    sanctionedAddresses.includes(output.recipient)
+      ? // TODO Assumes address in sanctionedAddresses and output.recipient are checksummed
+        console.log(`Removing sanctioned address: ${output.recipient}`)
+      : outputs.push(output)
   }
   return outputs
 }
@@ -70,6 +82,14 @@ const onionize = (
   }
 }
 
+const chunk = (arr: any[], size: number) => {
+  const chunks: any[] = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
 const program = new Command()
 
 program
@@ -81,9 +101,13 @@ program
   .command('wrap')
   .description('wrap the onion')
   .requiredOption('--source <source>', 'token onion source file')
+  .requiredOption(
+    '--sanctionedUrl <url>',
+    'A URL that loads a JSON array of sanctioned addresses'
+  )
   .action(async (args) => {
     // Load the inputs
-    const inputs = load(args.source)
+    const inputs = await load(args.source, args.sanctionedUrl)
     const { shell } = onionize(inputs)
 
     // Print the shell
@@ -94,9 +118,13 @@ program
   .command('approval')
   .description('generate the approval amount')
   .requiredOption('--source <source>', 'token onion source file')
+  .requiredOption(
+    '--sanctionedUrl <url>',
+    'A URL that loads a JSON array of sanctioned addresses'
+  )
   .action(async (args) => {
     let total = BigNumber.from(0)
-    const inputs = load(args.source)
+    const inputs = await load(args.source, args.sanctionedUrl)
     for (const input of inputs) {
       total = total.add(input.amount)
     }
@@ -106,16 +134,22 @@ program
 program
   .command('validate')
   .description('validate balances')
-  .option('--source <source>', 'token onion source file')
-  .option('--token <token>', 'erc20 token address')
-  .option('--provider <provider>', 'json rpc provider')
+  .requiredOption('--source <source>', 'token onion source file')
+  .requiredOption(
+    '--sanctionedUrl <url>',
+    'A URL that loads a JSON array of sanctioned addresses'
+  )
+  .requiredOption('--token <token>', 'erc20 token address')
+  .requiredOption('--provider <provider>', 'json rpc provider')
   .action(async (args) => {
-    const inputs = load(args.source)
+    const inputs = await load(args.source, args.sanctionedUrl)
     const provider = new ethers.providers.StaticJsonRpcProvider(args.provider)
 
-    const contract = new ethers.Contract(args.token, [
-      'function balanceOf(address) view returns (uint256)'
-    ], provider)
+    const contract = new ethers.Contract(
+      args.token,
+      ['function balanceOf(address) view returns (uint256)'],
+      provider
+    )
 
     console.log(`Connecting to contract ${args.token}`)
 
@@ -133,20 +167,28 @@ program
 program
   .command('peel')
   .description('peel the onion')
-  .option('--source <source>', 'token onion source file')
-  .option('--address <address>', 'token onion address')
-  .option('--provider <provider>', 'json rpc provider')
-  .option('--key <key>', 'ethereum private key to execute with')
+  .requiredOption('--source <source>', 'token onion source file')
+  .requiredOption(
+    '--sanctionedUrl <url>',
+    'A URL that loads a JSON array of sanctioned addresses'
+  )
+  .requiredOption('--address <address>', 'token onion address')
+  .requiredOption('--provider <provider>', 'json rpc provider')
+  .requiredOption('--key <key>', 'ethereum private key to execute with')
   .action(async (args) => {
     // Load the contract
     const provider = new ethers.providers.StaticJsonRpcProvider(args.provider)
     const signer = new ethers.Wallet(args.key, provider)
-    const contract = new ethers.Contract(args.address, TransferOnion.abi, signer)
+    const contract = new ethers.Contract(
+      args.address,
+      TransferOnion.abi,
+      signer
+    )
     console.log(`Connecting to contract at ${args.address}`)
 
     // Load the inputs
     console.log('Loading inputs')
-    const inputs = load(args.source)
+    const inputs = await load(args.source, args.sanctionedUrl)
     const { onion } = onionize(inputs)
     console.log('Built the onion')
 

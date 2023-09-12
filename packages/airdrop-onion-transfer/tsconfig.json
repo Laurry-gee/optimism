@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    // "baseUrl": "./src",
     "noEmit": true,
     "target": "ESNext",
     "lib": ["esnext"],
@@ -29,5 +28,5 @@
     "esModuleInterop": true,
     "strict": true
   },
-  "include": ["./script", "./out/TransferOnion.sol/TransferOnion.json"]
+  "include": ["script", "out/TransferOnion.sol/TransferOnion.json"]
 }

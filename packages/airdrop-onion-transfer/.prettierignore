@@ -1,0 +1,11 @@
+artifacts
+cache
+typechain
+.deps
+.envrc
+.env
+/dist/
+/src/
+/lib/
+/out/
+/test/
