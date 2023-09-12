@@ -53,8 +53,7 @@ There are several key invariants that must be maintained in order for the system
     1. The [`op-program`][op-program] must produce a deterministic output given an identical setup state and input data.
 1. **Dispute Game Contracts**
     1. Assuming the presence of an `honest challenger` (defined by the behavior of the [`op-challenger`][op-challenger]) participating within the game, the `FaultDisputeGame` utilizing the `MIPS` VM **must always** resolve favorably towards the honest L2 state.
-        1. *Note (1)*: The presence of an honest challenger implies that the honest challenger has exhausted all moves it would have made - any game where the honest challenger was unable to exhaust its move set can resovlve unfavorably to their desired outcome.
-        1. *Note (2)*: The only exception to this invariant in the alpha dispute game (with a `MIPS` VM) is the aforementioned DoS vector. This is not considered a valid bug report, however any other violation of this invariant is.
+        1. *Note (1)*: The presence of an honest challenger implies that the honest challenger has exhausted all moves it would have made - any game where the honest challenger was unable to exhaust its move set can resolve unfavorably to their desired outcome. The aforementioned DoS vector is one such reason the honest challenger may not perform all its moves.
 1. **op-challenger**
     1. The honest `op-challenger` must never make a claim that does not support the honest outcome of the dispute game (i.e., the outcome which favors the honest L2 state being considered canonical).
         1. *Note:* Because of the rules in the current solving / resolution mechanism, the challenger will counter all claims on a level it disagrees with. While this is an inefficiency, it is not considered a violation of this invariant, as this behavior is necessary to ensure that all invalid claims have been countered.
